@@ -232,18 +232,19 @@ async def debt(id):
 # информация о магазине
 @dp.message_handler(commands="info")
 async def info(message: types.Message):
-    if message.from_user.id not in getIds():
+    id = message.from_user.id
+    if id not in getIds():
         await NoShop(message)
     else:
-        if credit(message.from_user.id):
-            commands = int(getData(message.from_user.id, "commands"))
-            query = f" UPDATE users SET commands = {commands + 1} WHERE id={message.from_user.id} "
+        if credit(id):
+            commands = int(getData(id, "commands"))
+            query = f" UPDATE users SET commands = {commands + 1} WHERE id={id} "
             cursor.execute(query)
             db.commit()
             if commands == 6:
-                await debt(message.from_user.id)
+                await debt(id)
         priceK = ""
-        match getData(message.from_user.id, 'money')[-1]:
+        match getData(id, 'money')[-1]:
             case "1":
                 priceK = "рубль"
             case "2" | "3" | "4":
@@ -251,24 +252,32 @@ async def info(message: types.Message):
             case "5" | "6" | "7" | "8" | "9" | "0":
                  priceK = "рублей"
         creditT = ""
-        if getData(message.from_user.id, "credit") != "None":
+        if getData(id, "credit") != "None":
             creditT = ("Информация о кредите:\n"
-                        f"  Кол-во денег взятых в кредит {getData(message.from_user.id, 'credit')}\n"
-                        f"  Кол-во использованных команд: {getData(message.from_user.id, 'commands')}\n")
+                        f"  Кол-во денег взятых в кредит {getData(id, 'credit')}\n"
+                        f"  Кол-во использованных команд: {getData(id, 'commands')}\n")
+        
         await message.answer("Ваш магазин:\n"
-                            f"Баланс: {getData(message.from_user.id, 'money')} {priceK}\n"
-                            f"Кол-во выполненных заказов: {getData(message.from_user.id, 'offers')}\n"
+                            f"Баланс: {getData(id, 'money')} {priceK}\n"
+                            f"Кол-во выполненных заказов: {getData(id, 'offers')}\n"
                             f"{creditT}"
-                            f"Есть в наличи:\n"
-                                f"  Набор LEGO дом: {getData(message.from_user.id, 'LegoHouse', 'toys')},\n"
-                                f"  набор LEGO майнкрафт: {getData(message.from_user.id, 'LegoMine', 'toys')},\n"
-                                f"  Монополия: {getData(message.from_user.id, 'Monopoly', 'toys')},\n"
-                                f"  UNO: {getData(message.from_user.id, 'UNO', 'toys')},\n"
-                                f"  Имаджинариум: {getData(message.from_user.id, 'Imaginarium', 'toys')},\n"
-                                f"  Манчкин: {getData(message.from_user.id, 'Manchkin', 'toys')},\n"
-                                f"  Акула плюшевая: {getData(message.from_user.id, 'Shark', 'toys')},\n"
-                                f"  Авокадо плюшевое: {getData(message.from_user.id, 'Avokado', 'toys')},\n"
-                                f"  Покемон конструктор: {getData(message.from_user.id, 'Pokemon', 'toys')}")
+                            f"Ресурсы в наличии:\n"
+                                f"  Коробки: {getData(id, 'box', 'res')}\n"
+                                f"  Пластик: {getData(id, 'plastic', 'res')}\n"
+                                f"  Бумага: {getData(id, 'paper', 'res')}\n"
+                                f"  Ткань: {getData(id, 'textile', 'res')}\n"
+                                f"  Холофайбер: {getData(id, 'holofiber', 'res')}\n"
+                            f"Игрушки в наличи:\n"
+                                f"  Набор LEGO дом: {getData(id, 'LegoHouse', 'toys')},\n"
+                                f"  набор LEGO майнкрафт: {getData(id, 'LegoMine', 'toys')},\n"
+                                f"  Монополия: {getData(id, 'Monopoly', 'toys')},\n"
+                                f"  UNO: {getData(id, 'UNO', 'toys')},\n"
+                                f"  Имаджинариум: {getData(id, 'Imaginarium', 'toys')},\n"
+                                f"  Манчкин: {getData(id, 'Manchkin', 'toys')},\n"
+                                f"  Акула плюшевая: {getData(id, 'Shark', 'toys')},\n"
+                                f"  Авокадо плюшевое: {getData(id, 'Avokado', 'toys')},\n"
+                                f"  Покемон конструктор: {getData(id, 'Pokemon', 'toys')}")
+
 # Прийти на кассу
 @dp.message_handler(commands="store")
 async def shop(message: types.Message):
@@ -428,11 +437,14 @@ async def craft(message: types.Message):
             db.commit()
             if commands == 6:
                 await debt(message.from_user.id)
-    await message.answer("Что вы хотите скрафтить?", reply_markup=craftM)
+    await message.answer_sticker("CAACAgIAAxkBAAEKWKNlCxL0KmnnKmFL7BtWE7adErIBnAACDgADr8ZRGrdbgux-ASf3MAQ")
+    await message.answer(f"{hbold('Хомяк Фома')}: Здравствуй! С тебя ресурсы, с меня игрушки. Что приобрести хочешь?", reply_markup=craftM, parse_mode="HTML")
 
 @dp.callback_query_handler(text="recepts")
 async def recepts(callback: types.CallbackQuery):
-    await bot.send_message(callback.message.chat.id, f"{hbold('Конструкторы и LEGO')}: 1 коробка, 8 пластика\n"
+    await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWLxlCyTno3skdnAbzVPxP786_eYMAwACBQADr8ZRGpWJICJ8NGY0MAQ")
+    await bot.send_message(callback.message.chat.id, f"{hbold('Хомяк Фома')}:\n"
+                           f"{hbold('Конструкторы и LEGO')}: 1 коробка, 8 пластика\n"
                            f"{hbold('Настольные игры')}: 1 коробка, 7 бумаги\n"
                            f"{hbold('Мягкие игрушки')}: 9 ткани, 6 холофайбера", parse_mode="HTML")
 
@@ -441,7 +453,7 @@ async def recepts(callback: types.CallbackQuery):
 async def craftConstruct(callback: types.CallbackQuery):
     if int(getData(callback.from_user.id, "box", "res")) >= 1 and int(getData(callback.from_user.id, "plastic", "res")) >= 8:
         # Забрать материалы
-        query1 = f" UPDATE res SET textile = {int(getData(callback.from_user.id, 'textile', 'res')) - 9}, holofiber = {int(getData(callback.from_user.id, 'holofiber', 'res')) - 6} WHERE id={callback.from_user.id} "
+        query1 = f" UPDATE res SET box = {int(getData(callback.from_user.id, 'box', 'res')) - 1}, plastic = {int(getData(callback.from_user.id, 'plastic', 'res')) - 8} WHERE id={callback.from_user.id} "
         cursor.execute(query1)
         db.commit()
         if event():
@@ -451,19 +463,22 @@ async def craftConstruct(callback: types.CallbackQuery):
             db.commit()
             # Уведомление пользователя о том, что он успешно сделал игрушку
             productID = getIndex(productsP, callback.data)
-            await bot.send_message(callback.from_user.id, f"Вы скрафтили {productsAc[productID]}!")
+            await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWKVlCxMAActdesIOUDuBi8iyqrWrSVUAAgYAA6_GURqezu74W6n9-jAE")
+            await bot.send_message(callback.from_user.id, f"{hbold('Хомяк Фома')}: Я тебе сделал {productsAc[productID]}. Держи!", "HTML")
         else:
-            await bot.send_message(callback.from_user.id, f"К сожалению у Вас оказались бракованные ресурсы :(")
+            await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWLNlCxWfoQhAhrxvUivk-DT_rQABoYwAAggAA6_GURqn8hvy_oHklzAE")
+            await bot.send_message(callback.from_user.id, f"{hbold('Хомяк Фома')}: Ты мне ресурсы бракованные дал. У меня не получилось ничего сделать", "HTML")
     else:
         # Уведомление пользователя о том, что у него нет игрушки
-        await callback.answer(f"У Вас не хватает ресурсов :(", True)
+        await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWKdlCxME_K2aFw6BlRZ5ijNKVsx_CAACAQADr8ZRGhLj3-N0EyK_MAQ")
+        await bot.send_message(callback.from_user.id, f"{hbold('Хомяк Фома')}: Мне ресурсы нужны, чтобы игрушки делать. У Хэла купи их. (/shop)", "HTML")
 
 # Крафт настольных игр
 @dp.callback_query_handler(text=["Monopoly", "UNO", "Imaginarium", "Manchkin"])
 async def craftGames(callback: types.CallbackQuery):
     if int(getData(callback.from_user.id, "box", "res")) >= 1 and int(getData(callback.from_user.id, "paper", "res")) >= 7:
         # Забрать материалы
-        query1 = f" UPDATE res SET textile = {int(getData(callback.from_user.id, 'textile', 'res')) - 9}, holofiber = {int(getData(callback.from_user.id, 'holofiber', 'res')) - 6} WHERE id={callback.from_user.id} "
+        query1 = f" UPDATE res SET box = {int(getData(callback.from_user.id, 'box', 'res')) - 1}, paper = {int(getData(callback.from_user.id, 'holofiber', 'res')) - 7} WHERE id={callback.from_user.id} "
         cursor.execute(query1)
         db.commit()
         if event():
@@ -473,12 +488,15 @@ async def craftGames(callback: types.CallbackQuery):
             db.commit()
             # Уведомление пользователя о том, что он успешно сделал игрушку
             productID = getIndex(productsP, callback.data)
-            await bot.send_message(callback.from_user.id, f"Вы скрафтили {productsAc[productID]}!")
+            await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWKVlCxMAActdesIOUDuBi8iyqrWrSVUAAgYAA6_GURqezu74W6n9-jAE")
+            await bot.send_message(callback.from_user.id, f"{hbold('Хомяк Фома')}: Я тебе сделал {productsAc[productID]}. Держи!", "HTML")
         else:
-            await bot.send_message(callback.from_user.id, f"К сожалению у Вас оказались бракованные ресурсы :(")
+            await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWLNlCxWfoQhAhrxvUivk-DT_rQABoYwAAggAA6_GURqn8hvy_oHklzAE")
+            await bot.send_message(callback.from_user.id, f"{hbold('Хомяк Фома')}: Ты мне ресурсы бракованные дал. У меня не получилось ничего сделать", "HTML")
     else:
         # Уведомление пользователя о том, что у него нет игрушки
-        await callback.answer(f"У Вас не хватает ресурсов :(", True)
+        await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWKdlCxME_K2aFw6BlRZ5ijNKVsx_CAACAQADr8ZRGhLj3-N0EyK_MAQ")
+        await bot.send_message(callback.from_user.id, f"{hbold('Хомяк Фома')}: Мне ресурсы нужны, чтобы игрушки делать. У Хэла купи их. (/shop)", "HTML")
 
 # Крафт мягких игрушек
 @dp.callback_query_handler(text=["Shark", "Avokado"])
@@ -495,12 +513,15 @@ async def craftToys(callback: types.CallbackQuery):
             db.commit()
             # Уведомление пользователя о том, что он успешно сделал игрушку
             productID = getIndex(productsP, callback.data)
-            await bot.send_message(callback.from_user.id, f"Вы скрафтили {productsAc[productID]}!")
+            await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWKVlCxMAActdesIOUDuBi8iyqrWrSVUAAgYAA6_GURqezu74W6n9-jAE")
+            await bot.send_message(callback.from_user.id, f"{hbold('Хомяк Фома')}: Я тебе сделал {productsAc[productID]}. Держи!", "HTML")
         else:
-            await bot.send_message(callback.from_user.id, f"К сожалению у Вас оказались бракованные ресурсы :(")
+            await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWLNlCxWfoQhAhrxvUivk-DT_rQABoYwAAggAA6_GURqn8hvy_oHklzAE")
+            await bot.send_message(callback.from_user.id, f"{hbold('Хомяк Фома')}: Ты мне ресурсы бракованные дал. У меня не получилось ничего сделать", "HTML")
     else:
         # Уведомление пользователя о том, что у него нет игрушки
-        await callback.answer(f"У Вас не хватает ресурсов :(", True)
+        await bot.send_sticker(callback.from_user.id, "CAACAgIAAxkBAAEKWKdlCxME_K2aFw6BlRZ5ijNKVsx_CAACAQADr8ZRGhLj3-N0EyK_MAQ")
+        await bot.send_message(callback.from_user.id, f"{hbold('Хомяк Фома')}: Мне ресурсы нужны, чтобы игрушки делать. У Хэла купи их. (/shop)", "HTML")
 
 
 # Покупка ресурсов
